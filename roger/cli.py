@@ -33,7 +33,7 @@ from .utils import one_hot_encode_enums
 def run_inference_bulk(
     model_path: Path,
     data_path: Path,
-) -> list[bool]:
+) -> None:
     """Inference workflow on multiple data points.
 
     Args:
@@ -49,7 +49,6 @@ def run_inference_bulk(
         data,
     )
     click.echo(predictions.tolist())
-    return predictions.tolist()
 
 
 @click.command(name='live')
@@ -105,7 +104,7 @@ def run_inference_live(
     temperature: str,
     humidity: str,
     wind: str,
-) -> bool:
+) -> None:
     """Inference workflow on single data point.
 
     Args:
@@ -144,8 +143,7 @@ def run_inference_live(
         'Wind_Weak',
     ]
     predictions = infer(model_path, feat_cols=feat_cols, feats=feats)
-    click.echo(predictions)
-    return predictions.tolist()[0]
+    click.echo(predictions.tolist()[0])
 
 
 @click.group(name='infer')
