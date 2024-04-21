@@ -1,23 +1,23 @@
 from enum import Enum
 
 
-class Outlook(Enum):
+class Outlook(str, Enum):
     Overcast = 'overcast'
     Rain = 'rain'
     Sunny = 'sunny'
 
 
-class Temperature(Enum):
+class Temperature(str, Enum):
     Cool = 'cool'
     Hot = 'hot'
     Mild = 'mild'
 
 
-class Humidity(Enum):
+class Humidity(str, Enum):
     High = 'high'
     Normal = 'normal'
 
 
-class Wind(Enum):
+class Wind(str, Enum):
     Strong = 'strong'
     Weak = 'weak'
