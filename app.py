@@ -14,8 +14,8 @@ def read_root():
     return {'Hello': 'World'}
 
 
-@app.get('/infer/live/{version}')
-def get_live_prediction(version: Version, weather: Weather):
+@app.post('/infer/live/{version}')
+def get_live_prediction(version: Version, weather: Weather) -> Playability:
     model_path = Path(f'./models/{version}/tennis.pkl')
     playability_ = run_inference_on_live(
         model_path=model_path,
@@ -25,23 +25,24 @@ def get_live_prediction(version: Version, weather: Weather):
         wind=weather.wind,
     )
     play_map: dict[bool, str] = {
-        True: 'for playing',
-        False: 'not to play',
+        True: 'FOR PLAYING',
+        False: 'NOT TO PLAY',
     }
-    Playability(
+    return Playability(
         outlook=weather.outlook,
         temperature=weather.temperature,
         humidity=weather.humidity,
         wind=weather.wind,
         can_play=playability_,
-        description=f"""When
-        {weather.outlook.value=} &
-        {weather.temperature.value=} &
-        {weather.humidity.value=} &
-        {weather.wind.value=},
-        It is advised {play_map.get(playability_)}""",
+        description=(
+            'When '
+            f' outlook is {weather.outlook.value} & '
+            f'temperature is{weather.temperature.value} & '
+            f'humidity is {weather.humidity.value} & '
+            f'wind is {weather.wind.value}, '
+            f'It is advised {play_map.get(playability_)}'
+        ),
     )
-    # return Playability
 
 
 def start():

@@ -1,12 +1,9 @@
-from itertools import chain
 from pathlib import Path
 
 import click
 
 from .enums import Humidity, Outlook, Temperature, Wind
-from .feat_engg import feat_transform_infer
-from .inference import infer, infer_bulk
-from .utils import one_hot_encode_enums
+from .inference import run_inference_on_file, run_inference_on_live
 
 
 @click.command(name='bulk')
@@ -43,12 +40,11 @@ def run_inference_bulk(
     Returns:
         list[bool]: predictions
     """
-    data = feat_transform_infer(data_path)
-    predictions = infer_bulk(
-        model_path,
-        data,
+    predictions = run_inference_on_file(
+        model_path=model_path,
+        data_path=data_path,
     )
-    click.echo(predictions.tolist())
+    click.echo(predictions)
 
 
 @click.command(name='live')
@@ -117,33 +113,14 @@ def run_inference_live(
     Returns:
         bool: prediction
     """
-    outlook_encoded = one_hot_encode_enums(Outlook, outlook.lower())
-    temp_encoded = one_hot_encode_enums(Temperature, temperature.lower())
-    humidity_encoded = one_hot_encode_enums(Humidity, humidity.lower())
-    wind_encoded = one_hot_encode_enums(Wind, wind.lower())
-
-    feats = list(
-        chain(
-            outlook_encoded,
-            temp_encoded,
-            humidity_encoded,
-            wind_encoded,
-        )
+    predictions = run_inference_on_live(
+        model_path=model_path,
+        outlook=outlook,
+        temperature=temperature,
+        humidity=humidity,
+        wind=wind,
     )
-    feat_cols = [
-        'Outlook_Overcast',
-        'Outlook_Rain',
-        'Outlook_Sunny',
-        'Temperature_Cool',
-        'Temperature_Hot',
-        'Temperature_Mild',
-        'Humidity_High',
-        'Humidity_Normal',
-        'Wind_Strong',
-        'Wind_Weak',
-    ]
-    predictions = infer(model_path, feat_cols=feat_cols, feats=feats)
-    click.echo(predictions.tolist()[0])
+    click.echo(predictions)
 
 
 @click.group(name='infer')
