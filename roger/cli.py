@@ -1,10 +1,12 @@
-from collections.abc import Iterable
+from itertools import chain
 from pathlib import Path
 
 import click
 
+from .enums import Humidity, Outlook, Temperature, Wind
 from .feat_engg import feat_transform_infer
 from .inference import infer, infer_bulk
+from .utils import one_hot_encode_enums
 
 
 @click.command(name='bulk')
@@ -46,6 +48,7 @@ def run_inference_bulk(
         model_path,
         data,
     )
+    click.echo(predictions.tolist())
     return predictions.tolist()
 
 
@@ -61,30 +64,73 @@ def run_inference_bulk(
     help='path to model',
 )
 @click.option(
-    '-d',
-    '--data',
-    nargs=10,
-    type=click.IntRange(min=0, max=1),
-    help="""Pass as `
-        Outlook_Overcast Outlook_Rain Outlook_Sunny
-        Temperature_Cool Temperature_Hot Temperature_Mild
-        Humidity_High Humidity_Normal Wind_Strong Wind_Weak
-        `
-        """,
+    '-o',
+    '--outlook',
+    type=click.Choice(
+        choices=[e.value for e in Outlook],
+        case_sensitive=False,
+    ),
+    help='Either of Overcast Rain Sunny',
+)
+@click.option(
+    '-t',
+    '--temperature',
+    type=click.Choice(
+        choices=[e.value for e in Temperature],
+        case_sensitive=False,
+    ),
+    help='Either of Cool Hot Mild',
+)
+@click.option(
+    '-h',
+    '--humidity',
+    type=click.Choice(
+        choices=[e.value for e in Humidity],
+        case_sensitive=False,
+    ),
+    help='Either of High Normal',
+)
+@click.option(
+    '-w',
+    '--wind',
+    type=click.Choice(
+        choices=[e.value for e in Wind],
+        case_sensitive=False,
+    ),
+    help='Either of Strong Weak',
 )
 def run_inference_live(
     model_path: Path,
-    data: Iterable[int],
+    outlook: str,
+    temperature: str,
+    humidity: str,
+    wind: str,
 ) -> bool:
     """Inference workflow on single data point.
 
     Args:
         model_path (Path): path to model
-        data (Iterable[int]): path to data
+        outlook (str): Outlook type
+        temperature (str): Temp type
+        humidity (str): Humidity type
+        wind (str): Wind type
 
     Returns:
         bool: prediction
     """
+    outlook_encoded = one_hot_encode_enums(Outlook, outlook.lower())
+    temp_encoded = one_hot_encode_enums(Temperature, temperature.lower())
+    humidity_encoded = one_hot_encode_enums(Humidity, humidity.lower())
+    wind_encoded = one_hot_encode_enums(Wind, wind.lower())
+
+    feats = list(
+        chain(
+            outlook_encoded,
+            temp_encoded,
+            humidity_encoded,
+            wind_encoded,
+        )
+    )
     feat_cols = [
         'Outlook_Overcast',
         'Outlook_Rain',
@@ -97,7 +143,8 @@ def run_inference_live(
         'Wind_Strong',
         'Wind_Weak',
     ]
-    predictions = infer(model_path, feat_cols=feat_cols, feats=list(data))
+    predictions = infer(model_path, feat_cols=feat_cols, feats=feats)
+    click.echo(predictions)
     return predictions.tolist()[0]
 
 
