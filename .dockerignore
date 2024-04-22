@@ -3,7 +3,6 @@
 .vscode
 .env
 .gitignore
-README.md
 .venv
 LICENSE
 **/__pycache__/

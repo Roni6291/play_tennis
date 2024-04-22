@@ -14,16 +14,23 @@ RUN poetry export \
 
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.10
 
-RUN mkdir -p /opt/tennis
+ENV PIP_ROOT_USER_ACTION=ignore
+
+RUN mkdir -p /opt/tennis/models /opt/tennis/dist
 
 WORKDIR /opt/tennis
 
-COPY --from=requirements-stage /tmp/requirements.txt /tmp/dist/ /tmp/app.py /tmp/models/ ./
+COPY --from=requirements-stage /tmp/requirements.txt /tmp/app.py /opt/tennis/
+COPY --from=requirements-stage /tmp/dist /opt/tennis/dist
+COPY --from=requirements-stage /tmp/models /opt/tennis/models
 
 RUN chmod +x /opt/tennis/* && \
+    python3 -m pip install --upgrade pip && \
     pip install \
         --no-cache-dir \
-        -r /opt/requirements.txt && \
-    pip install /opt/tennis/dist/*.whl
+        -r /opt/tennis/requirements.txt && \
+    pip install /opt/tennis/dist/roger-0.1.0-py3-none-any.whl
 
-CMD ["gunicorn", "app:app" "--workers" "2" "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8000
+
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:8000","-k", "uvicorn.workers.UvicornWorker", "app:app"]
