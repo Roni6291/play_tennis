@@ -1,8 +1,10 @@
+import multiprocessing
 from pathlib import Path
 
 from fastapi import FastAPI
 import uvicorn
 
+from roger.asgi import StandaloneApplication
 from roger.dataclasses import Playability, Version, Weather
 from roger.inference import run_inference_on_live
 
@@ -37,7 +39,7 @@ def get_live_prediction(version: Version, weather: Weather) -> Playability:
         description=(
             'When '
             f' outlook is {weather.outlook.value} & '
-            f'temperature is{weather.temperature.value} & '
+            f'temperature is {weather.temperature.value} & '
             f'humidity is {weather.humidity.value} & '
             f'wind is {weather.wind.value}, '
             f'It is advised {play_map.get(playability_)}'
@@ -45,6 +47,17 @@ def get_live_prediction(version: Version, weather: Weather) -> Playability:
     )
 
 
-def start():
-    """Launched with `poetry run start` at root level."""
+def asgi_run():
+    """Launched with `poetry run asgi` at root level."""
     uvicorn.run('app:app', host='0.0.0.0', port=8000, reload=True)
+
+
+# XXX: fails with ModuleNotFoundError: 'fcntl' not in Windows  # noqa: TD001
+def gunicorn_run():
+    """Launched with `poetry run wsgi` at root level."""
+    options = {
+        'bind': '0.0.0.0:8000',
+        'workers': multiprocessing.cpu_count(),
+        'worker_class': 'uvicorn.workers.UvicornWorker',
+    }
+    StandaloneApplication('myproject.main:app', options).run()

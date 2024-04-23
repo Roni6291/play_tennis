@@ -22,7 +22,8 @@ ruff = "^0.4.1"
 
 [tool.poetry.scripts]
 roger = 'roger.__main__:main'
-start = "app:start"
+asgi = "app:asgi_run"
+wasgi = "app:gunicorn_run"
 
 [build-system]
 requires = ["poetry-core"]
